@@ -45,6 +45,7 @@ strength, size limits and which ComfyUI workflow to use.
 ## Docs
 
 - **[Findings](docs/FINDINGS.md):** results, conclusions, recommended recipe, when to use it.
+- **[VFX use cases](docs/VFX_USE_CASES.md):** chained recipes (location swap, costume swap, creatures in the real set, new world, relight, restoration) and their limits.
 - **[Install](docs/INSTALL.md):** ComfyUI and nodes, Hugging Face access (the weights are
   gated), downloading the weights, and int8 vs bf16.
 - **[Usage](docs/USAGE.md):** running it from the UI or headless, using the matte, and

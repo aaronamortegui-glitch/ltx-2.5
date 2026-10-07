@@ -1,0 +1,20 @@
+{
+  "source": "layout_depth.mp4",
+  "width": 576,
+  "height": 1024,
+  "frames": 49,
+  "fps": 25.0,
+  "lora": "ltx-2.5-22b-ic-lora-layout-to-render-1.0.safetensors",
+  "strength": 1.0,
+  "prompt": "A young woman with a long ponytail in a loose light sweatshirt and pink cargo pants dances in front of a corrugated metal wall lit with purple and magenta neon light. Photorealistic music video, cinematic lighting.",
+  "negative": "",
+  "image": "../tests/vfx_02_layout_to_render/first_frame.png",
+  "image_strength": 1.0,
+  "seed": 42,
+  "vae": "ltx-2.5-video-vae-bf16.safetensors",
+  "decode_temporal": "64,8",
+  "levels": "0,255",
+  "seconds": 86.9,
+  "vram_peak_gb": 18.8,
+  "prompt_id": "4ee13a09-6033-4059-af14-3cc637fd7e91"
+}

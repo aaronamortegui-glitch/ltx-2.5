@@ -30,6 +30,7 @@ WORKFLOW = REPO / "workflows" / "LTX-2.5_AlphaGen_int8_API.json"
 N_VIDEO, N_IMAGE, N_PROMPT, N_NEG = "5001", "2004", "5508", "5509"
 N_LORA, N_RESIZE, N_SEED, N_SAVE = "5004:5606", "5548:5026", "5516:4832", "4852"
 N_VAE, N_DECODE = "5004:5601", "5518:5538"
+N_USE_IMAGE, N_IMG2VID = "5014:5506", "9002:3159"
 
 
 class VramPeak(threading.Thread):
@@ -61,22 +62,22 @@ def probe(path):
     return int(v["width"]), int(v["height"]), float(num) / float(den), has_audio
 
 
-def prepare(src, dst, frames, short_side, start):
-    """Scale so the shorter side == short_side, center-crop the long side to a multiple of 32."""
+def prepare(src, dst, frames, short_side, start, align=32):
+    """Scale so the shorter side == short_side, center-crop the long side to a multiple of `align`."""
     w, h, fps, has_audio = probe(src)
     if w <= h:
         sw, sh = short_side, round(h * short_side / w)
-        cw, ch = sw, sh // 32 * 32
+        cw, ch = sw, sh // align * align
     else:
         sw, sh = round(w * short_side / h), short_side
-        cw, ch = sw // 32 * 32, sh
+        cw, ch = sw // align * align, sh
     vf = f"scale={sw}:{sh}:flags=lanczos,crop={cw}:{ch}"
     cmd = ["ffmpeg", "-v", "error", "-y", "-ss", str(start), "-i", str(src)]
     if not has_audio:  # the workflow encodes the source audio, so it must exist
         cmd += ["-f", "lavfi", "-i", "anullsrc=r=48000:cl=stereo"]
     cmd += ["-map", "0:v:0", "-map", "1:a:0" if not has_audio else "0:a:0",
             "-vf", vf, "-frames:v", str(frames), "-c:v", "libx264", "-crf", "14",
-            "-pix_fmt", "yuv420p", "-c:a", "aac", "-shortest", str(dst)]
+            "-pix_fmt", "yuv420p", "-c:a", "aac", "-t", f"{frames / fps:.4f}", str(dst)]
     run(cmd)
     return cw, ch, fps
 
@@ -106,6 +107,10 @@ def main():
     ap.add_argument("--lora", default="ltx-2.5-22b-ic-lora-alpha-gen-0.9.safetensors")
     ap.add_argument("--strength", type=float, default=1.0)
     ap.add_argument("--prompt", default="", help="Alpha Gen: keep empty")
+    ap.add_argument("--align", type=int, default=32,
+                    help="size multiple; use 64 for IC-LoRAs with a 0.5 reference (Union Control, ref0.5)")
+    ap.add_argument("--image", help="optional first-frame image (e.g. Layout to Render styled frame)")
+    ap.add_argument("--image-strength", type=float, default=0.7)
     ap.add_argument("--negative", default="", help="negative prompt (Clean Plate, Day-to-Night)")
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--vae", default="ltx-2.5-video-vae-bf16.safetensors",
@@ -121,25 +126,29 @@ def main():
 
     src = Path(args.video).resolve()
     frames = (args.frames - 1) // 8 * 8 + 1
-    if args.short_side % 32:
-        raise SystemExit("--short-side must be a multiple of 32")
+    if args.short_side % args.align:
+        raise SystemExit(f"--short-side must be a multiple of {args.align}")
     out = Path(args.out) if args.out else src.parent / f"{src.stem}_ltx"
     out.mkdir(parents=True, exist_ok=True)
 
     tag = f"{src.stem}_{uuid.uuid4().hex[:6]}"
     prepared = out / "input.mp4"
-    w, h, fps = prepare(src, prepared, frames, args.short_side, args.start)
+    w, h, fps = prepare(src, prepared, frames, args.short_side, args.start, args.align)
     with tempfile.TemporaryDirectory() as td:  # LoadImage needs a file even when "use image input" is off
         ph = Path(td) / "placeholder.png"
         run(["ffmpeg", "-v", "error", "-y", "-f", "lavfi", "-i", "color=c=black:s=64x64", "-frames:v", "1", str(ph)])
         ph_name = upload(args.url, ph, "ltx_placeholder.png")
     vid_name = upload(args.url, prepared, f"{tag}.mp4")
+    if args.image:
+        ph_name = upload(args.url, args.image, f"{tag}_first{Path(args.image).suffix}")
 
     wf = json.loads(WORKFLOW.read_text(encoding="utf-8"))
     wf[N_VIDEO]["inputs"]["file"] = vid_name
     wf[N_IMAGE]["inputs"]["image"] = ph_name
     wf[N_PROMPT]["inputs"]["value"] = args.prompt
     wf[N_NEG]["inputs"]["value"] = args.negative
+    wf[N_USE_IMAGE]["inputs"]["value"] = bool(args.image)
+    wf[N_IMG2VID]["inputs"]["strength"] = args.image_strength
     wf[N_LORA]["inputs"]["lora_name"] = args.lora
     wf[N_LORA]["inputs"]["strength_model"] = args.strength
     wf[N_RESIZE]["inputs"]["resize_type.shorter_size"] = args.short_side
@@ -189,7 +198,7 @@ def main():
          "-frames:v", "1", "-vf", "scale=-2:640", str(out / "preview_frame.jpg")])
 
     meta = {"source": src.name, "width": w, "height": h, "frames": frames, "fps": fps, "lora": args.lora,
-            "strength": args.strength, "prompt": args.prompt, "negative": args.negative, "seed": args.seed, "vae": args.vae, "decode_temporal": args.decode_temporal, "levels": args.levels,
+            "strength": args.strength, "prompt": args.prompt, "negative": args.negative, "image": args.image, "image_strength": args.image_strength, "seed": args.seed, "vae": args.vae, "decode_temporal": args.decode_temporal, "levels": args.levels,
             "seconds": round(elapsed, 1), "vram_peak_gb": round(vram.peak / 1024, 1), "prompt_id": pid}
     (out / "run.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
     print(f"done in {elapsed:.0f} s, VRAM peak {vram.peak / 1024:.1f} GB -> {out}")

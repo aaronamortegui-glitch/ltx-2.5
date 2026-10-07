@@ -36,6 +36,8 @@ def main():
     ap.add_argument("--height", type=int, default=544)
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--negative", default="")
+    ap.add_argument("--lora", help="plain LoRA applied to the transformer (e.g. Cinemagraph)")
+    ap.add_argument("--lora-strength", type=float, default=1.0)
     ap.add_argument("--no-enhance", action="store_true", help="skip the Gemma E2B prompt enhancer")
     ap.add_argument("--out", required=True)
     args = ap.parse_args()
@@ -56,6 +58,14 @@ def main():
     wf[N_SEED]["inputs"]["noise_seed"] = args.seed
     wf[N_SAVE]["inputs"]["filename_prefix"] = f"ltx25/{out.name}"
     wf[N_USE_IMAGE]["inputs"]["value"] = bool(args.image)
+    if args.lora:  # insert LoraLoaderModelOnly after the UNET and reroute every consumer to it
+        unet = next(k for k, v in wf.items() if v["class_type"] == "UNETLoader")
+        for v in wf.values():
+            for name, val in v["inputs"].items():
+                if val == [unet, 0]:
+                    v["inputs"][name] = ["lora_extra", 0]
+        wf["lora_extra"] = {"class_type": "LoraLoaderModelOnly", "inputs": {
+            "model": [unet, 0], "lora_name": args.lora, "strength_model": args.lora_strength}}
     if args.image:
         wf[N_IMAGE]["inputs"]["image"] = upload(args.url, args.image, Path(args.image).name)
         shutil.copy(args.image, out / ("start" + Path(args.image).suffix))
@@ -90,7 +100,7 @@ def main():
     effective = effective[0] if isinstance(effective, list) and effective else str(effective)
     meta = {"prompt": args.prompt, "effective_prompt": effective, "image": Path(args.image).name if args.image else None,
             "i2v_strength": args.i2v_strength, "seconds": args.seconds, "fps": args.fps,
-            "size": [args.width, args.height], "seed": args.seed, "enhance": not args.no_enhance,
+            "size": [args.width, args.height], "seed": args.seed, "enhance": not args.no_enhance, "lora": args.lora, "lora_strength": args.lora_strength,
             "gen_seconds": round(elapsed, 1), "vram_peak_gb": round(vram.peak / 1024, 1), "prompt_id": pid}
     (out / "run.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
     print(f"done in {elapsed:.0f} s, VRAM peak {vram.peak / 1024:.1f} GB -> {out}")

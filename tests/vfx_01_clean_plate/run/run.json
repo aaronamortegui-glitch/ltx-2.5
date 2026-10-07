@@ -1,0 +1,20 @@
+{
+  "source": "input_dancer.mp4",
+  "width": 576,
+  "height": 1024,
+  "frames": 49,
+  "fps": 25.0,
+  "lora": "ltx-2.5-22b-ic-lora-clean-plate-1.0.safetensors",
+  "strength": 1.0,
+  "prompt": "An empty clean plate of the exact same location: an urban skatepark corner with a graffiti-covered wall, large round speakers, a skateboard lying on the concrete floor and magenta lighting. Identical background, environment, structures and lighting as the source video, with no people, no humans, no figures, and no body parts such as arms, hands or legs anywhere in the frame. Static photorealistic footage, high detail.",
+  "negative": "people, person, human, man, woman, dancer, figure, body, arms, hands, legs, face, silhouette, shadow of a person",
+  "image": null,
+  "image_strength": 0.7,
+  "seed": 42,
+  "vae": "ltx-2.5-video-vae-bf16.safetensors",
+  "decode_temporal": "64,8",
+  "levels": "0,255",
+  "seconds": 81.7,
+  "vram_peak_gb": 19.1,
+  "prompt_id": "a78d0319-7050-4a2a-be58-e7915875dcbd"
+}

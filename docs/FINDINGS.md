@@ -42,9 +42,25 @@ transformer and int8 Gemma 12B encoder.
 8. **The base model also generates usable clips.** T2V and I2V at 960x544 x 5 s took about
    65 s each at about 19.7 GB, with audio ([gen_01](../tests/gen_01_t2v_coffee),
    [gen_02](../tests/gen_02_i2v_pour)).
-9. **The video VAE choice doesn't matter for mattes.** The conv VAE gives a virtually
+9. **The other IC-LoRAs work, each with a clear limit** (details in
+   [VFX_USE_CASES.md](VFX_USE_CASES.md)):
+   - **Clean Plate:** removes people and rebuilds the set, even a hidden car.
+   - **Decompression:** removes the blocks, but re-invents destroyed motion detail.
+   - **Colorization:** colours objects well, but not coloured light.
+   - **Day-to-Night:** gives blue hour, not full night, on the distilled graph.
+   - **Union Control:** keeps motion and layout, but not identity. Photoreal changes work;
+     claymation failed.
+   - **Inpaint:** swaps a costume while keeping the face, as long as the face is subtracted
+     from the mask.
+   - **Cinemagraph:** works on a product, weaker on people.
+   - **Layout to Render:** follows layout and first frame closely.
+10. **Chaining blocks gives real VFX shots on 24 GB:**
+    - location swap: Alpha Gen + SAM3 + a generated plate + a composite
+    - creatures in the real set: Clean Plate + Union pose + Alpha Gen + a composite
+    - wardrobe change: SAM3 masks + Inpaint
+11. **The video VAE choice doesn't matter for mattes.** The conv VAE gives a virtually
    identical matte (0.16 % of pixels differ noticeably) and is a bit faster, so use it.
-10. **VRAM sets the limit on a 24 GB card.**
+12. **VRAM sets the limit on a 24 GB card.**
 
    | size | frames | time | VRAM peak |
    |---|---|---|---|
@@ -96,5 +112,7 @@ python scripts\run_alpha_gen.py clip.mp4 --short-side 1088 --frames 25 --seed 12
 - Chunked full-HD processing over a whole shot, and whether the matte jumps at the seams.
 - 145 vs 97 frames.
 - A hybrid that uses the Alpha Gen matte as the core and a keyer for the edges.
-- Pending a Hugging Face license click: Clean Plate, Decompression, Colorization, Day-to-Night, Layout to Render, Cinemagraph.
+- Layout to Render from a real 3D playblast with an AI-styled first frame.
+- Day-to-Night and Cinemagraph with the dev model at the card's guidance (3–4), for a darker night and stronger loops.
+- Shadow and perspective matching for full-body and vehicle location swaps.
 - Clean Plate (subject removal) to get a matte plus a clean background pair.
