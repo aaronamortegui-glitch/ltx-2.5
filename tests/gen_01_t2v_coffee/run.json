@@ -1,0 +1,17 @@
+{
+  "prompt": "A slow cinematic dolly-in on a tall glass of iced coffee on a wooden cafe table by a sunny window. Condensation runs down the glass, ice cubes shift slightly, soft morning light, shallow depth of field, a barista moves out of focus in the background. Gentle cafe ambience.",
+  "effective_prompt": "A slow cinematic dolly-in frames a tall, clear glass filled with iced coffee resting on a rustic wooden cafe table positioned directly beside a bright window, captured from a slight low-angle perspective emphasizing the height of the glass. Condensation streams visibly down the exterior surface of the glass, individual ice cubes within the liquid shift subtly, illuminated by soft, warm morning light streaming through the window, creating pronounced highlights and deep shadows across the wood grain; a very shallow depth of field keeps the foreground glass razor-sharp while rendering the background significantly blurred, showing the indistinct shape of a barista moving softly out of focus near the counter. Gentle, muted cafe ambience fills the air, characterized by the faint clinking of ceramic and distant, low murmur of conversation, underscored by a soft, ambient instrumental track with a calm, mellow mood, all rendered with rich, cinematic color grading and crisp high-resolution detail.",
+  "image": null,
+  "i2v_strength": 0.7,
+  "seconds": 5.0,
+  "fps": 24.0,
+  "size": [
+    960,
+    544
+  ],
+  "seed": 42,
+  "enhance": true,
+  "gen_seconds": 65.1,
+  "vram_peak_gb": 19.7,
+  "prompt_id": "52fc2df3-e892-467d-b023-3a4f4202732e"
+}

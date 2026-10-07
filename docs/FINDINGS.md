@@ -32,9 +32,19 @@ transformer and int8 Gemma 12B encoder.
    - A bowl held out by an *off-screen* hand was treated as background, which left a hole in
      the person behind it. Anything that is not part of the people, or not held by them, can
      be dropped, and there is no way to ask for it.
-6. **The video VAE choice doesn't matter for mattes.** The conv VAE gives a virtually
+6. **Alpha Gen + SAM3 recovers dropped objects.** Running `SAM3Segment` with text prompts
+   ("bowl of candy", "hand") and merging that mask with the Alpha Gen matte (lighten / max)
+   put the held bowl back. You get Alpha Gen's fine people edges plus objects you can pick by
+   name. This removes the "can't choose the subject" limit when an object matters.
+7. **Deblur sharpens strong defocus but re-invents detail**
+   ([restore_01](../tests/restore_01_deblur)). SSIM went from 0.916 to 0.935; patterns and
+   facial detail came back plausible but not identical.
+8. **The base model also generates usable clips.** T2V and I2V at 960x544 x 5 s took about
+   65 s each at about 19.7 GB, with audio ([gen_01](../tests/gen_01_t2v_coffee),
+   [gen_02](../tests/gen_02_i2v_pour)).
+9. **The video VAE choice doesn't matter for mattes.** The conv VAE gives a virtually
    identical matte (0.16 % of pixels differ noticeably) and is a bit faster, so use it.
-7. **VRAM sets the limit on a 24 GB card.**
+10. **VRAM sets the limit on a 24 GB card.**
 
    | size | frames | time | VRAM peak |
    |---|---|---|---|
@@ -86,4 +96,5 @@ python scripts\run_alpha_gen.py clip.mp4 --short-side 1088 --frames 25 --seed 12
 - Chunked full-HD processing over a whole shot, and whether the matte jumps at the seams.
 - 145 vs 97 frames.
 - A hybrid that uses the Alpha Gen matte as the core and a keyer for the edges.
+- Pending a Hugging Face license click: Clean Plate, Decompression, Colorization, Day-to-Night, Layout to Render, Cinemagraph.
 - Clean Plate (subject removal) to get a matte plus a clean background pair.

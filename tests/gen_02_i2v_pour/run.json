@@ -1,0 +1,17 @@
+{
+  "prompt": "The purple cocktail shaker tilts and pours a creamy pink drink into the martini glass. The liquid splashes inside the glass and a few droplets fly out in slow motion. Studio product shot against a flat green screen, the camera is static.",
+  "effective_prompt": "A medium shot frames a sleek, dark purple cocktail shaker positioned above a clear martini glass against a vibrant, flat green screen, illuminated by bright studio lighting that highlights the glossy texture of the shaker and the refractive quality of the glass; the purple cocktail shaker begins to tilt slowly from left to right, and a thick, creamy pink liquid begins to pour from its spout into the waiting martini glass, captured with sharp, high-resolution detail and richly saturated film-grade color, while a soft, ambient, sophisticated jazz track plays quietly in the background; as the liquid enters the glass, it creates a dynamic splash effect inside the martini glass, causing several distinct droplets of the pink liquid to fly outward in dramatic slow motion, emphasizing the viscosity and texture of the drink, all while the camera remains perfectly static, maintaining a front-facing viewpoint that focuses entirely on the pouring action and the resulting splash, creating a clean, professional studio product shot.",
+  "image": "ltx_i2v_pour_first.png",
+  "i2v_strength": 0.7,
+  "seconds": 5.0,
+  "fps": 24.0,
+  "size": [
+    960,
+    544
+  ],
+  "seed": 42,
+  "enhance": true,
+  "gen_seconds": 65.5,
+  "vram_peak_gb": 19.6,
+  "prompt_id": "c4b61b03-6bd7-498a-82f5-30d488e25ee4"
+}
