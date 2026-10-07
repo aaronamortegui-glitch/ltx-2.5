@@ -52,6 +52,7 @@ def main():
     ap.add_argument("--levels", default="32,235", help="matte black,white points")
     ap.add_argument("--despill", choices=["none", "green", "blue"], default="none")
     ap.add_argument("--seed", type=int, default=1234)
+    ap.add_argument("--vae", default="ltx-2.5-video-vae-bf16.safetensors")
     ap.add_argument("--cool-down", type=int, default=15, help="seconds to wait between windows")
     ap.add_argument("--max-temp", type=int, default=80, help="wait until the GPU is below this (C)")
     ap.add_argument("--out", help="output folder (default: <clip>_alpha next to the clip)")
@@ -97,7 +98,7 @@ def main():
             print(f"window {i + 1}/{len(starts)} frames {s}-{s + args.window - 1}", flush=True)
             subprocess.run([sys.executable, str(HERE / "run_alpha_gen.py"), str(clip),
                             "--short-side", str(min(W, Hp)), "--frames", str(args.window),
-                            "--seed", str(args.seed), "--decode-temporal", "64,8",
+                            "--seed", str(args.seed), "--decode-temporal", "64,8", "--vae", args.vae,
                             "--levels", args.levels, "--bg", "0x303848", "--out", str(wdir)], check=True)
             if i < len(starts) - 1:
                 time.sleep(args.cool_down)
@@ -141,10 +142,24 @@ def main():
     subprocess.run(["ffmpeg", "-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", "gray", "-s", f"{W}x{H}",
                     "-r", str(fps), "-i", "-", "-c:v", "libx264", "-crf", "12", "-pix_fmt", "yuv420p",
                     str(out / "matte.mp4")], input=matte[:n].tobytes(), check=True)
+    # 5. review video: source | matte | RGBA over grey
+    vf_src = f"scale={W}:{H}:flags=lanczos" + (f",despill=type={args.despill}" if args.despill != "none" else "")
+    fc = (f"[0:v]{vf_src},split[o1][o2];[1:v]format=gray,split[m1][m2];[o2][m2]alphamerge[fg];"
+          f"color=c=0x303848:s={W}x{H}:r={fps}[bg];[bg][fg]overlay=shortest=1[comp];"
+          f"[m1]format=yuv420p[mv];[o1][mv][comp]hstack=inputs=3,format=yuv420p[out]")
+    subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", str(src), "-i", str(out / "matte.mp4"),
+                    "-filter_complex", fc, "-map", "[out]", "-frames:v", str(n), "-c:v", "libx264", "-crf", "18",
+                    str(out / "side_by_side.mp4")], check=True)
+    peaks = []
+    for i, s0 in enumerate(starts):
+        rj = work / f"win_{i:02d}_{s0:04d}" / "run.json"
+        if rj.exists():
+            r = json.loads(rj.read_text(encoding="utf-8"))
+            peaks.append({"start": s0, "seconds": r.get("seconds"), "vram_peak_gb": r.get("vram_peak_gb")})
     (out / "run.json").write_text(json.dumps({
         "source": src.name, "frames": n, "fps": fps, "size": [W, H], "model_size": [W, Hp],
         "window": args.window, "overlap": args.overlap, "windows": starts, "levels": args.levels,
-        "despill": args.despill, "seed": args.seed}, indent=2), encoding="utf-8")
+        "despill": args.despill, "seed": args.seed, "vae": args.vae, "per_window": peaks}, indent=2), encoding="utf-8")
     print(f"done: {n} PNGs -> {png_dir}")
 
 

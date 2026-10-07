@@ -24,13 +24,24 @@ transformer and int8 Gemma 12B encoder.
 4. **Clamp the matte's black level.** At 768 and above the matte background sits at about
    23–29 instead of 0. That makes the background partly opaque and tints the composite. A
    levels pass of black 32 and white 235 fixes it (`--levels 32,235`).
-5. **VRAM sets the limit on a 24 GB card.**
+5. **Subject choice with several people works, but held objects get dropped.** On two
+   personal test clips (not published):
+   - Both people in frame were matted in every shot. A car they sit on and lean against was
+     excluded. The matte stayed correct across hard camera cuts.
+   - Dark hair against a dark night background was clean.
+   - A bowl held out by an *off-screen* hand was treated as background, which left a hole in
+     the person behind it. Anything that is not part of the people, or not held by them, can
+     be dropped, and there is no way to ask for it.
+6. **The video VAE choice doesn't matter for mattes.** The conv VAE gives a virtually
+   identical matte (0.16 % of pixels differ noticeably) and is a bit faster, so use it.
+7. **VRAM sets the limit on a 24 GB card.**
 
    | size | frames | time | VRAM peak |
    |---|---|---|---|
    | 960x544 | 97 | ~2 min | 18.6–19 GB |
    | 1344x768 | 97 | ~3 min | **23.0 GB, at the limit** |
    | 1920x1088 | 25 | ~1.7 min | 18.4–19 GB |
+   | 1024x768 | 49 | ~1.1 min | 18.6–18.8 GB |
 
    Full HD over a whole shot means processing it in short windows. Don't search for the
    ceiling by pushing higher on this machine.
@@ -42,7 +53,7 @@ transformer and int8 Gemma 12B encoder.
 | input | source resolution up to 1920x1088, padded to multiples of 32; frames 8n+1, at most 121; audio track required (the script adds a silent one) |
 | model | distilled int8 transformer + `ltx-2.5-22b-ic-lora-alpha-gen-0.9`, strength 1.0, empty prompt |
 | sampler | 8 distilled steps, `euler_ancestral`, CFG 1, seed 1234 |
-| decode | `VAEDecodeTiled` 512/64, temporal 64/8 |
+| decode | `VAEDecodeTiled` 512/64, temporal 64/8; the conv video VAE is fine for mattes |
 | post | levels 32/235 on the matte, then `out = source * alpha + bg * (1 - alpha)` on the original clip (despill if it was shot on green) |
 
 ```bat
@@ -62,7 +73,7 @@ python scripts\run_alpha_gen.py clip.mp4 --short-side 1088 --frames 25 --seed 12
 ## Limitations
 
 - You cannot choose which object becomes the foreground; the model picks the dominant
-  subject.
+  subject. People come first: objects held by someone out of frame are dropped.
 - 145 frames at most, 121 recommended. Longer shots need chunking, and the seams between
   windows are untested.
 - The output is a plain video. There is no EXR or alpha output from the stock workflow, so
@@ -73,8 +84,6 @@ python scripts\run_alpha_gen.py clip.mp4 --short-side 1088 --frames 25 --seed 12
 ## Open questions and next tests
 
 - Chunked full-HD processing over a whole shot, and whether the matte jumps at the seams.
-- Personal clips in `tests_private/`: two people plus a car in shot, and a night scene with
-  dark hair against a dark background, to see which subject gets picked.
-- 145 vs 97 frames, and the conv VAE vs the diffusion VAE.
+- 145 vs 97 frames.
 - A hybrid that uses the Alpha Gen matte as the core and a keyer for the edges.
 - Clean Plate (subject removal) to get a matte plus a clean background pair.
