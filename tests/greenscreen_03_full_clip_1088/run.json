@@ -1,0 +1,30 @@
+{
+  "source": "Dynamic Pour Scene_V3_4k.mp4",
+  "frames": 206,
+  "fps": 16.0,
+  "size": [
+    1920,
+    1080
+  ],
+  "model_size": [
+    1920,
+    1088
+  ],
+  "window": 25,
+  "overlap": 4,
+  "windows": [
+    0,
+    21,
+    42,
+    63,
+    84,
+    105,
+    126,
+    147,
+    168,
+    181
+  ],
+  "levels": "32,235",
+  "despill": "green",
+  "seed": 1234
+}
