@@ -20,7 +20,9 @@ python scripts\run_alpha_gen_chunked.py "Dynamic Pour Scene_V3_4k.mp4" --despill
 the frames around it. The largest jumps (frames 77–90) are the splash itself, not a join. No
 visible popping in `preview_over_grey.mp4`.
 
+![source | matte | result](showcase.gif)
+
 ![contact sheet](preview_contact.jpg)
 
-Files here: `matte.mp4` (the joined matte) and `preview_over_grey.mp4` (the PNGs over grey).
+Files here: `showcase.gif`, `matte.mp4` (the joined matte) and `preview_over_grey.mp4` (the PNGs over grey).
 The PNG sequence (206 files, 137 MB) is not committed.

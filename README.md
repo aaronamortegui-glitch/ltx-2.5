@@ -4,9 +4,13 @@ Notes, workflows, scripts and test results for running **LTX-2.5** (Lightricks, 
 video + audio) and its **IC-LoRAs** locally in ComfyUI. The first focus is **Alpha Gen**,
 which pulls an alpha matte from ordinary footage, with no green screen and no prompt.
 
+![Alpha Gen on a full green-screen shot: source, matte, result](tests/greenscreen_03_full_clip_1088/showcase.gif)
+
+*The whole 206-frame shot at 1920x1080, processed in VRAM-safe windows on a 24 GB laptop GPU: source | Alpha Gen matte | RGBA result over grey ([details](tests/greenscreen_03_full_clip_1088)).*
+
 ![Alpha Gen vs chroma key on a green-screen pour](tests/greenscreen_02_resolution/splash.jpg)
 
-*Chroma key vs Alpha Gen at 544 / 768 / 1088 short side on a green-screen pour shot. At source resolution Alpha Gen keeps the semi-transparent glass.*
+*Chroma key vs Alpha Gen at 544 / 768 / 1088 short side. At source resolution Alpha Gen keeps the semi-transparent glass.*
 
 ## Key findings so far
 
