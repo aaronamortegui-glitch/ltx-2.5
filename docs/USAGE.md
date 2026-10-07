@@ -40,6 +40,9 @@ Python and ffmpeg.
 python scripts\run_alpha_gen.py clip.mp4                       :: 97 frames, shorter side 544
 python scripts\run_alpha_gen.py clip.mp4 --start 3 --frames 145
 python scripts\run_alpha_gen.py clip.mp4 --short-side 768 --out tests\my_run
+:: recommended quality settings (full HD needs short windows on 24 GB):
+python scripts\run_alpha_gen.py clip.mp4 --short-side 1088 --frames 25 --start 3 --seed 1234 ^
+       --decode-temporal 64,8 --levels 32,235 --bg 0x303848
 python scripts\run_alpha_gen.py clip.mp4 --lora ltx-2.5-22b-ic-lora-deblur-0.9.safetensors ^
        --prompt "Reference shows a street, heavily out of focus. DEBLUR a sharp street scene"
 ```
@@ -62,6 +65,33 @@ in as the **luma matte** of the original clip. With ffmpeg:
 ```bat
 ffmpeg -i input.mp4 -i output.mp4 -filter_complex "[1:v]format=gray[m];[0:v][m]alphamerge" -c:v prores_ks -profile:v 4444 -pix_fmt yuva444p10le subject_with_alpha.mov
 ```
+
+## Recommended Alpha Gen settings (official guide + community, tested here)
+
+| setting | value | source |
+|---|---|---|
+| resolution | **the source resolution**, up to 1920x1088 (1088 short side). Pad to multiples of 32 rather than stretching | official guide; Alex Villabon and Ok Todd workflows use 1088 |
+| frames | **121 or fewer** for predictable results; 122–145 "may work"; above 145, RGB leaks into the matte | official guide. The Villabon workflow allows up to 241 ("works a lot of the time"), which we have not verified |
+| prompt / strength | empty / 1.0 | official |
+| sampler | distilled 8 steps, `euler_ancestral`, CFG 1, seed 1234 | official example and Villabon workflow |
+| decode | `VAEDecodeTiled` 512 / 64 with temporal **64 / 8** (lower memory than 128 / 32) | Villabon workflow |
+| matte post | clamp the black level: the matte background sits at about 23–29 at 768+, so apply levels 32/235 before compositing | measured here ([greenscreen_02](../tests/greenscreen_02_resolution)) |
+| compositing | `out = source_rgb * alpha + bg * (1 - alpha)`; use the matte on the **original** clip, never the generated RGB | official guide |
+
+What the resolution test showed: at a 544 short side, Alpha Gen made glass opaque and drew
+droplets too fat. At 768 and 1088 the glass is semi-transparent and the edges are tight. Run
+it at the source resolution.
+
+**On a 24 GB GPU:** 1344x768 x 97 frames peaked at 23.0 GB, which is the limit. 1920x1088
+works with short windows (25 frames, about 19 GB). For full HD, process the shot in short
+chunks with a few frames of overlap and join the mattes. People on the
+[Logik forum](https://forum.logik.tv/t/ltx-2-5-alpha-gen/15024) ran 3200x1900 x 49 frames
+using about 90 GB, and UHD x 145 frames took 39 min, both on large GPUs.
+
+Community verdict on the Logik forum: the results were "amazingly clean for what it is",
+with occasional slight dilation. Mask-based tools such as SAMMIE or SAM are steadier on fast
+human motion, while Alpha Gen does better on hair and semi-transparent material. Several
+users combine the mattes from two tools.
 
 ## Tips and gotchas found while testing
 

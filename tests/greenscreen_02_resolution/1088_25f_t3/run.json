@@ -1,0 +1,16 @@
+{
+  "source": "pour_v3_4k.mp4",
+  "width": 1920,
+  "height": 1088,
+  "frames": 25,
+  "fps": 16.0,
+  "lora": "ltx-2.5-22b-ic-lora-alpha-gen-0.9.safetensors",
+  "strength": 1.0,
+  "prompt": "",
+  "seed": 1234,
+  "vae": "ltx-2.5-video-vae-bf16.safetensors",
+  "decode_temporal": "64,8",
+  "seconds": 95.1,
+  "vram_peak_gb": 19.0,
+  "prompt_id": "5c43e522-db6e-448a-8921-b67acbf98472"
+}

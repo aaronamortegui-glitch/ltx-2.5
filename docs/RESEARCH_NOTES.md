@@ -34,6 +34,28 @@ Sources reviewed on 2026-10-07 and what each one contributed.
 - **[Comfy docs: LTX-2.5](https://docs.comfy.org/tutorials/video/ltx/ltx-2-5):** core
   support landed before ComfyUI v0.32.0.
 
+- **[LTX docs: Alpha Gen guide](https://docs.ltx.io/open-source-model/vfx-post-production/alpha-gen):**
+  - 121 frames or fewer is recommended; 122–145 is less reliable.
+  - The Python CLI uses `--skip-stage-2` with 2x width and height, so stage 1 runs at the
+    source resolution.
+  - Long clips need chunking; nothing splits them automatically.
+- **[Logik forum thread](https://forum.logik.tv/t/ltx-2-5-alpha-gen/15024):** Flame artists
+  testing it in production.
+  - Comparisons against Silhouette Matte ML, Flame AutoMatte and SAMMIE.
+  - VRAM use of about 90 GB at 3200x1900.
+  - 1920x1080 sources come back at 1088, so crop the matte to the source.
+  - Advice to choose seam points carefully when chunking.
+- **Community workflows:**
+  [Alex Villabon](https://github.com/avillabon/Tutorial_Files/tree/main/LTX%202.5%20Alpha%20Gen%20Beta)
+  and the Ok Todd version of it
+  ([video](https://www.youtube.com/watch?v=J-3rK-8ths4)). Both:
+  - use a 1088 short side, seed 1234 and decode temporal 64/8
+  - export alpha, premult and over-green previews, plus a contact sheet
+- **Not useful:** a community-merged NVFP4 single file
+  ([mskim8584/LTX-2.5-Alpha-Gen-VideoOnly-NVFP4](https://huggingface.co/mskim8584/LTX-2.5-Alpha-Gen-VideoOnly-NVFP4)).
+  Its own card says it failed the author's matte-quality gates.
+- Reddit had no threads with settings at the time of writing (2026-10-07).
+
 ## How the V2V IC-LoRA workflow works
 
 The graph has five subgraphs, read left to right:

@@ -29,7 +29,7 @@ WORKFLOW = REPO / "workflows" / "LTX-2.5_AlphaGen_int8_API.json"
 # node ids inside the API workflow
 N_VIDEO, N_IMAGE, N_PROMPT, N_NEG = "5001", "2004", "5508", "5509"
 N_LORA, N_RESIZE, N_SEED, N_SAVE = "5004:5606", "5548:5026", "5516:4832", "4852"
-N_VAE = "5004:5601"
+N_VAE, N_DECODE = "5004:5601", "5518:5538"
 
 
 class VramPeak(threading.Thread):
@@ -109,6 +109,11 @@ def main():
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--vae", default="ltx-2.5-video-vae-bf16.safetensors",
                     help="video VAE; ltx-2.5-video-vae-conv-bf16.safetensors = lower memory, faster")
+    ap.add_argument("--decode-temporal", default="128,32",
+                    help="VAEDecodeTiled temporal_size,temporal_overlap; 64,8 lowers decode memory")
+    ap.add_argument("--levels", default="0,255",
+                    help="black,white points applied to the matte in the side-by-side composite; "
+                         "768+ outputs have a lifted black (~23-29), 32,235 fixes it")
     ap.add_argument("--bg", default="0x20c040", help="composite background colour (use a non-green one for green-screen sources)")
     ap.add_argument("--out", help="output folder (default: <video name>_ltx next to the video)")
     args = ap.parse_args()
@@ -138,6 +143,9 @@ def main():
     wf[N_RESIZE]["inputs"]["resize_type.shorter_size"] = args.short_side
     wf[N_SEED]["inputs"]["noise_seed"] = args.seed
     wf[N_VAE]["inputs"]["vae_name"] = args.vae
+    t_size, t_overlap = (int(x) for x in args.decode_temporal.split(","))
+    wf[N_DECODE]["inputs"]["temporal_size"] = t_size
+    wf[N_DECODE]["inputs"]["temporal_overlap"] = t_overlap
     wf[N_SAVE]["inputs"]["filename_prefix"] = f"ltx25/{tag}"
 
     req = urllib.request.Request(f"{args.url}/prompt", data=json.dumps({"prompt": wf}).encode(),
@@ -168,7 +176,9 @@ def main():
         shutil.copyfileobj(r, f)
 
     side = out / "side_by_side.mp4"
-    fc = (f"[0:v]split[o1][o2];[1:v]format=gray,split[m1][m2];[o2][m2]alphamerge[fg];"
+    lo, hi = (int(x) for x in args.levels.split(","))
+    lv = rf"lutyuv=y='clip((val-{lo})*255/({hi}-{lo})\,0\,255)'"
+    fc = (f"[0:v]split[o1][o2];[1:v]format=gray,{lv},split[m1][m2];[o2][m2]alphamerge[fg];"
           f"color=c={args.bg}:s={w}x{h}:r={fps}[bg];[bg][fg]overlay=shortest=1[comp];"
           f"[m1]format=yuv420p[mv];[o1][mv][comp]hstack=inputs=3,format=yuv420p[out]")
     run(["ffmpeg", "-v", "error", "-y", "-i", str(prepared), "-i", str(matte), "-filter_complex", fc,
@@ -177,7 +187,7 @@ def main():
          "-frames:v", "1", "-vf", "scale=-2:640", str(out / "preview_frame.jpg")])
 
     meta = {"source": src.name, "width": w, "height": h, "frames": frames, "fps": fps, "lora": args.lora,
-            "strength": args.strength, "prompt": args.prompt, "seed": args.seed, "vae": args.vae,
+            "strength": args.strength, "prompt": args.prompt, "seed": args.seed, "vae": args.vae, "decode_temporal": args.decode_temporal, "levels": args.levels,
             "seconds": round(elapsed, 1), "vram_peak_gb": round(vram.peak / 1024, 1), "prompt_id": pid}
     (out / "run.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
     print(f"done in {elapsed:.0f} s, VRAM peak {vram.peak / 1024:.1f} GB -> {out}")

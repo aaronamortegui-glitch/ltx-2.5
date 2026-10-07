@@ -20,6 +20,5 @@ downscaled to 960x544. The test uses the first 97 frames.
   The extra area is background, so it shows as dark halos after despill. The chroma key
   gives tighter edges.
 - **Solid objects (the shaker):** both methods give a clean, hole-free matte.
-- **Verdict:** on real green-screen footage, a conventional keyer plus despill is better.
-  Alpha Gen is worth it on footage that has no green screen. A possible hybrid is to use
-  the Alpha Gen matte as a core or garbage matte and the keyer for edges and transparency.
+- **Verdict at 544 (superseded, see [greenscreen_02](../greenscreen_02_resolution)):** at this resolution a conventional keyer plus despill looked better.
+  At the source resolution (1088), with a levels fix, Alpha Gen wins on this shot.
