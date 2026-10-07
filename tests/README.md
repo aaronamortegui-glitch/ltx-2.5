@@ -16,6 +16,7 @@ int8 distilled transformer + int8 Gemma 12B encoder, video VAE `ltx-2.5-video-va
 | private: p01 (personal clip, not published) | Alpha Gen, chunked, 3 windows of 49 + overlap 8 | two people posing at a car, 3 camera angles (hard cuts) | 1024x768 (native) | 124 @ 24 fps | 65–70 s / window | 18.6–18.8 GB | Both people picked as foreground in every shot; the car is excluded even where she sits on it and he leans on the roof; the matte stays correct across hard cuts |
 | private: p02 (personal clip, not published) | same, 5 windows | night, dark hair on a dark porch, costumes (cape, bandages), off-screen hand holding a bowl | 1024x768 | 192 @ 24 fps | 65–70 s / window | 18.6–18.8 GB | Dark hair against the dark background and costume edges are clean. **Limit found:** a bowl held by an off-screen hand is treated as background and punches a hole in her matte |
 | private: p03 | p02 window 1 with the conv video VAE | same | 1024x768 | 49 | 61 s (vs 65 s) | 18.6 GB | The matte is virtually identical to the diffusion VAE (mean diff 0.75/255, 0.16 % of pixels differ by >32). Use conv: slightly faster, same result |
+| [restore_01_deblur](restore_01_deblur) | Deblur 0.9, DEBLUR prompt template, seed 42 | Pexels dancer, synthetic defocus (`gblur` sigma 3.5) | 544x960 | 97 @ 25 fps | 80 s | 18.8 GB | SSIM 0.916 -> **0.935**. Sharpness largely restored; with blur this strong the bandana pattern and fine facial features are re-invented (plausible, not identical) |
 
 ![alpha_gen_01](alpha_gen_01/preview_frame.jpg)
 ![alpha_gen_02](alpha_gen_02/preview_frame.jpg)

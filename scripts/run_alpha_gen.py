@@ -106,6 +106,7 @@ def main():
     ap.add_argument("--lora", default="ltx-2.5-22b-ic-lora-alpha-gen-0.9.safetensors")
     ap.add_argument("--strength", type=float, default=1.0)
     ap.add_argument("--prompt", default="", help="Alpha Gen: keep empty")
+    ap.add_argument("--negative", default="", help="negative prompt (Clean Plate, Day-to-Night)")
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--vae", default="ltx-2.5-video-vae-bf16.safetensors",
                     help="video VAE; ltx-2.5-video-vae-conv-bf16.safetensors = lower memory, faster")
@@ -138,6 +139,7 @@ def main():
     wf[N_VIDEO]["inputs"]["file"] = vid_name
     wf[N_IMAGE]["inputs"]["image"] = ph_name
     wf[N_PROMPT]["inputs"]["value"] = args.prompt
+    wf[N_NEG]["inputs"]["value"] = args.negative
     wf[N_LORA]["inputs"]["lora_name"] = args.lora
     wf[N_LORA]["inputs"]["strength_model"] = args.strength
     wf[N_RESIZE]["inputs"]["resize_type.shorter_size"] = args.short_side
@@ -187,7 +189,7 @@ def main():
          "-frames:v", "1", "-vf", "scale=-2:640", str(out / "preview_frame.jpg")])
 
     meta = {"source": src.name, "width": w, "height": h, "frames": frames, "fps": fps, "lora": args.lora,
-            "strength": args.strength, "prompt": args.prompt, "seed": args.seed, "vae": args.vae, "decode_temporal": args.decode_temporal, "levels": args.levels,
+            "strength": args.strength, "prompt": args.prompt, "negative": args.negative, "seed": args.seed, "vae": args.vae, "decode_temporal": args.decode_temporal, "levels": args.levels,
             "seconds": round(elapsed, 1), "vram_peak_gb": round(vram.peak / 1024, 1), "prompt_id": pid}
     (out / "run.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
     print(f"done in {elapsed:.0f} s, VRAM peak {vram.peak / 1024:.1f} GB -> {out}")

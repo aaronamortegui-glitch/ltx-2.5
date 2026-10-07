@@ -1,0 +1,18 @@
+{
+  "source": "blurred.mp4",
+  "width": 544,
+  "height": 960,
+  "frames": 97,
+  "fps": 25.0,
+  "lora": "ltx-2.5-22b-ic-lora-deblur-0.9.safetensors",
+  "strength": 1.0,
+  "prompt": "Reference shows a bearded young man with a headband, a blue shirt and pink baggy pants dancing in an urban skatepark lit with magenta light, a graffiti-covered wall with speakers behind him and a skateboard on the floor, heavily out of focus with soft defocused blur and no fine detail. Edited shows the same scene in sharp focus with crisp detail and clean edges. DEBLUR a bearded young man with a headband, a blue shirt and pink baggy pants dancing in an urban skatepark lit with magenta light, a graffiti-covered wall with speakers behind him and a skateboard on the floor. Subject identity, framing, and background geometry are identical to the reference; only focus and sharpness differ between reference and edited.",
+  "negative": "",
+  "seed": 42,
+  "vae": "ltx-2.5-video-vae-bf16.safetensors",
+  "decode_temporal": "64,8",
+  "levels": "0,255",
+  "seconds": 80.1,
+  "vram_peak_gb": 18.8,
+  "prompt_id": "72ce40b6-2986-442d-8f75-975675b93916"
+}
