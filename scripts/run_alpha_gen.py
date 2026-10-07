@@ -17,6 +17,7 @@ import json
 import shutil
 import subprocess
 import tempfile
+import threading
 import time
 import urllib.request
 import uuid
@@ -28,6 +29,24 @@ WORKFLOW = REPO / "workflows" / "LTX-2.5_AlphaGen_int8_API.json"
 # node ids inside the API workflow
 N_VIDEO, N_IMAGE, N_PROMPT, N_NEG = "5001", "2004", "5508", "5509"
 N_LORA, N_RESIZE, N_SEED, N_SAVE = "5004:5606", "5548:5026", "5516:4832", "4852"
+N_VAE = "5004:5601"
+
+
+class VramPeak(threading.Thread):
+    """Poll nvidia-smi once a second and keep the highest memory.used (MiB)."""
+
+    def __init__(self):
+        super().__init__(daemon=True)
+        self.peak, self.stop = 0, threading.Event()
+
+    def run(self):
+        while not self.stop.is_set():
+            try:
+                used = run(["nvidia-smi", "--query-gpu=memory.used", "--format=csv,noheader,nounits"])
+                self.peak = max(self.peak, int(used.splitlines()[0]))
+            except (OSError, subprocess.CalledProcessError, ValueError):
+                return
+            self.stop.wait(1)
 
 
 def run(cmd):
@@ -88,6 +107,9 @@ def main():
     ap.add_argument("--strength", type=float, default=1.0)
     ap.add_argument("--prompt", default="", help="Alpha Gen: keep empty")
     ap.add_argument("--seed", type=int, default=42)
+    ap.add_argument("--vae", default="ltx-2.5-video-vae-bf16.safetensors",
+                    help="video VAE; ltx-2.5-video-vae-conv-bf16.safetensors = lower memory, faster")
+    ap.add_argument("--bg", default="0x20c040", help="composite background colour (use a non-green one for green-screen sources)")
     ap.add_argument("--out", help="output folder (default: <video name>_ltx next to the video)")
     args = ap.parse_args()
 
@@ -115,6 +137,7 @@ def main():
     wf[N_LORA]["inputs"]["strength_model"] = args.strength
     wf[N_RESIZE]["inputs"]["resize_type.shorter_size"] = args.short_side
     wf[N_SEED]["inputs"]["noise_seed"] = args.seed
+    wf[N_VAE]["inputs"]["vae_name"] = args.vae
     wf[N_SAVE]["inputs"]["filename_prefix"] = f"ltx25/{tag}"
 
     req = urllib.request.Request(f"{args.url}/prompt", data=json.dumps({"prompt": wf}).encode(),
@@ -126,12 +149,15 @@ def main():
     print(f"queued {pid}  {w}x{h}  {frames} frames  @ {fps:.2f} fps", flush=True)
 
     t0 = time.time()
+    vram = VramPeak()
+    vram.start()
     while True:
         hist = get_json(f"{args.url}/history/{pid}").get(pid)
         if hist and hist["status"].get("status_str") in ("success", "error"):
             break
         time.sleep(5)
     elapsed = time.time() - t0
+    vram.stop.set()
     if hist["status"]["status_str"] != "success":
         raise SystemExit(json.dumps(hist["status"]["messages"], indent=1)[-3000:])
 
@@ -143,7 +169,7 @@ def main():
 
     side = out / "side_by_side.mp4"
     fc = (f"[0:v]split[o1][o2];[1:v]format=gray,split[m1][m2];[o2][m2]alphamerge[fg];"
-          f"color=c=0x20c040:s={w}x{h}:r={fps}[bg];[bg][fg]overlay=shortest=1[comp];"
+          f"color=c={args.bg}:s={w}x{h}:r={fps}[bg];[bg][fg]overlay=shortest=1[comp];"
           f"[m1]format=yuv420p[mv];[o1][mv][comp]hstack=inputs=3,format=yuv420p[out]")
     run(["ffmpeg", "-v", "error", "-y", "-i", str(prepared), "-i", str(matte), "-filter_complex", fc,
          "-map", "[out]", "-c:v", "libx264", "-crf", "18", str(side)])
@@ -151,10 +177,10 @@ def main():
          "-frames:v", "1", "-vf", "scale=-2:640", str(out / "preview_frame.jpg")])
 
     meta = {"source": src.name, "width": w, "height": h, "frames": frames, "fps": fps, "lora": args.lora,
-            "strength": args.strength, "prompt": args.prompt, "seed": args.seed,
-            "seconds": round(elapsed, 1), "prompt_id": pid}
+            "strength": args.strength, "prompt": args.prompt, "seed": args.seed, "vae": args.vae,
+            "seconds": round(elapsed, 1), "vram_peak_gb": round(vram.peak / 1024, 1), "prompt_id": pid}
     (out / "run.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
-    print(f"done in {elapsed:.0f} s -> {out}")
+    print(f"done in {elapsed:.0f} s, VRAM peak {vram.peak / 1024:.1f} GB -> {out}")
 
 
 if __name__ == "__main__":

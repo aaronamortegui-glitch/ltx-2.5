@@ -9,3 +9,7 @@ _hf_tmp/
 *.pt
 
 __pycache__/
+
+# personal clips and the runs made with them (repo is public)
+clips_private/
+tests_private/
