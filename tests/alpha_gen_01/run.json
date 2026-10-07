@@ -1,0 +1,13 @@
+{
+  "source": "7197864-uhd_2160_3840_25fps.mp4",
+  "width": 544,
+  "height": 960,
+  "frames": 97,
+  "fps": 25.0,
+  "lora": "ltx-2.5-22b-ic-lora-alpha-gen-0.9.safetensors",
+  "strength": 1.0,
+  "prompt": "",
+  "seed": 42,
+  "seconds": 119.2,
+  "prompt_id": "4f0370e7-a2bd-48e8-8174-d8e6c6ac410a"
+}

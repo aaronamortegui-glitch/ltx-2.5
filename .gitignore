@@ -1,0 +1,11 @@
+# local scratch: Spanish working notes, downloaded model cards, logs, backups
+_local/
+_hf_tmp/
+*.log
+
+# never commit weights
+*.safetensors
+*.ckpt
+*.pt
+
+__pycache__/

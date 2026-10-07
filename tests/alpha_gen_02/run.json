@@ -1,0 +1,13 @@
+{
+  "source": "8688886-hd_1080_1920_25fps.mp4",
+  "width": 544,
+  "height": 960,
+  "frames": 97,
+  "fps": 25.0,
+  "lora": "ltx-2.5-22b-ic-lora-alpha-gen-0.9.safetensors",
+  "strength": 1.0,
+  "prompt": "",
+  "seed": 42,
+  "seconds": 111.8,
+  "prompt_id": "18d38dab-bb98-4472-a386-3e5262898ccd"
+}
