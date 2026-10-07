@@ -4,10 +4,19 @@ Notes, workflows, scripts and test results for running **LTX-2.5** (Lightricks, 
 video + audio) and its **IC-LoRAs** locally in ComfyUI. The first focus is **Alpha Gen**,
 which pulls an alpha matte from ordinary footage, with no green screen and no prompt.
 
-![Alpha Gen test: original | matte | composite](tests/alpha_gen_01/preview_frame.jpg)
+![Alpha Gen vs chroma key on a green-screen pour](tests/greenscreen_02_resolution/splash.jpg)
 
-*Alpha Gen on a 544x960, 97-frame clip: original | generated matte | composite over green.
-About 2 min on an RTX 5090 Laptop (24 GB).*
+*Chroma key vs Alpha Gen at 544 / 768 / 1088 short side on a green-screen pour shot. At source resolution Alpha Gen keeps the semi-transparent glass.*
+
+## Key findings so far
+
+- Alpha Gen pulls clean mattes **without a green screen**, keeping soft hair edges and leaving out floor reflections.
+- **Resolution matters most.** Run at the source resolution (1088 short side). At 544 glass turns opaque and droplets come out too fat.
+- On a green-screen pour shot, Alpha Gen at 1088 **beat a basic chroma key**: it keeps the transparent glass that the keyer erases.
+- Clamp the matte's lifted black (levels 32/235) before compositing.
+- 24 GB VRAM: 768 x 97 frames is the limit, and full HD needs short windows (25 frames, about 19 GB).
+
+Full write-up: **[docs/FINDINGS.md](docs/FINDINGS.md)**.
 
 ## What it is
 
@@ -31,6 +40,7 @@ strength, size limits and which ComfyUI workflow to use.
 
 ## Docs
 
+- **[Findings](docs/FINDINGS.md):** results, conclusions, recommended recipe, when to use it.
 - **[Install](docs/INSTALL.md):** ComfyUI and nodes, Hugging Face access (the weights are
   gated), downloading the weights, and int8 vs bf16.
 - **[Usage](docs/USAGE.md):** running it from the UI or headless, using the matte, and
