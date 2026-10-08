@@ -20,6 +20,7 @@ All runs are on an RTX 5090 Laptop (24 GB), each at an 18.3–19.4 GB peak.
 | **In/Outpainting** | regenerates only the masked region (two stage) | `run_inpaint.py` |
 | **T2V / I2V** | generates new plates (backgrounds) or shots from a frame | `run_t2v.py` |
 | **Composite** | puts a matted foreground over a new plate, ping-pong looping the plate | `composite.py` |
+| **Shadow + colour** | shadow pass from the Clean Plate ratio, Lab colour match | `composite_shadow.py` |
 
 ## Recipes
 
@@ -99,6 +100,55 @@ car behind two people, across hard cuts (private).
 - **Cinemagraph:** works on product shots (5 % of pixels move); weaker on people.
 - **Layout to Render:** follows a layout and first frame closely (proxy test).
 
+## Round 2: going deeper on what worked
+
+### 9. Shadow pass + colour match for location swaps (fixes the "pasted" look)
+`original / Clean Plate luminance ratio -> shadow pass -> multiply onto the new plate; Lab colour transfer on the foreground`
+
+- **Public test:** see [vfx_05](../tests/vfx_05_shadow_pass).
+  - The real floor shadow is recovered and the feet are grounded.
+  - The colour match is the biggest gain.
+  - Limit the search to the floor and near the subject, because the regenerated plate is not
+    pixel-identical and the raw ratio flags texture differences.
+- **Private, waist-up shot at a car:** almost no shadow to recover, because the shadow fell
+  on the car, which belongs to the matte. **The floor must be in frame.**
+
+### 10. Remove one person, keep the other
+`Clean Plate (everyone removed) + Alpha Gen matte limited to one SAM3 region ("woman") -> composite`
+
+- **Private run: works very well.** He disappears, she stays untouched, and the car he was
+  covering is rebuilt, across all three camera angles.
+- **Only artefact:** a thin strip of his jacket where their bodies touched. Tighten the mask
+  edge there.
+
+### 11. Replace a person in place: Inpaint versus Union Control
+`SAM3 "person" mask -> Inpaint with an alien prompt` compared with the Union pose version (recipe 3).
+
+| | Inpaint (person mask) | Union Control (pose) |
+|---|---|---|
+| placement and scale | **exact** (stays inside the silhouette) | drifts a little |
+| pose and gesture | **lost** (arms down instead of hands on hips) | **kept** |
+| background | untouched original | regenerated, so it needs a Clean Plate composite |
+
+Neither gives both. A pose-conditioned inpaint would, but the inpaint graph has no control
+input.
+
+### 12. Remove an object people interact with: fails
+`SAM3 "car" - "person" -> Inpaint with an "empty street" prompt`
+
+- **Private run:** the couple leans on the car, and the inpaint simply drew a different
+  (grey) car.
+- **Lesson:** removal works for people and free-standing objects. Anything a subject touches
+  or leans on gets re-imagined, not removed.
+
+### 13. Product pipeline: one green-screen shot into many ads
+`Alpha Gen full-clip matte (1080p, chunked) -> N generated plates -> composite`
+
+- **Public test:** see [vfx_04](../tests/vfx_04_product_pipeline). Three backgrounds at
+  about 1 min each.
+- **The semi-transparent glass shows each new background through it**, which a basic chroma
+  key cannot do.
+
 ## Results at a glance (private runs, text only)
 
 | run | blocks | size x frames | time | peak | verdict |
@@ -115,6 +165,10 @@ car behind two people, across hard cuts (private).
 | day to night | Day-to-Night | 704x544 x 97 | 90 s | 18.9 GB | blue hour, not full night |
 | clean plate of the car | Clean Plate | 704x544 x 97 | 90 s | 19.1 GB | rebuilt the hidden car |
 | cinemagraph of people | Cinemagraph LoRA | 704x512 x 25 | 65 s | 18.9 GB | weak; trees and camera drift |
+| remove him, keep her | Clean Plate + Alpha Gen limited by SAM3 "woman" | 704x544 x 89 | CPU comp | — | **works**; thin jacket strip where they touch |
+| aliens via inpaint | SAM3 "person" + Inpaint | 1024x768 x 49 | 127 s | 19.0 GB | exact placement, pose lost |
+| remove the car | SAM3 car - person + Inpaint | 1024x768 x 49 | 135 s | 19.0 GB | **failed**: drew another car |
+| shadow pass at the car | Clean Plate ratio | 704x544 x 89 | CPU | — | no usable shadow (floor out of frame) |
 
 ## Gotchas found
 - **Union Control (ref 0.5) needs width and height as multiples of 64.** At 704x544 it fails

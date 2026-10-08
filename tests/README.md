@@ -26,6 +26,9 @@ int8 distilled transformer + int8 Gemma 12B encoder, video VAE `ltx-2.5-video-va
 | [vfx_02_layout_to_render](vfx_02_layout_to_render) | Layout to Render 1.0, depth map as layout proxy + real first frame | Pexels dancer | 576x1024 | 49 | 87 s | 18.8 GB | Follows layout and first-frame look closely (best case: first frame is real) |
 | [vfx_03_cinemagraph](vfx_03_cinemagraph) | Cinemagraph LoRA 0.9 (strength 1.1) on I2V | pour shot still | 704x512 | 25 | 65 s | 18.5 GB | Only the liquid moves (~5 % of pixels); small loop seam |
 | private: VFX set (11 runs) | Alpha Gen, SAM3, Clean Plate, Union Control, Inpaint, Day-to-Night, T2V plates, composites | personal clips | 704x576 / 1024x768 | 25–192 | 65–340 s | 18.3–19.4 GB | See [docs/VFX_USE_CASES.md](../docs/VFX_USE_CASES.md): location swap, costume swap with face kept, aliens in the real street, Mars, day to night |
+| [vfx_04_product_pipeline](vfx_04_product_pipeline) | Alpha Gen full-clip matte + 3 T2V plates + `composite.py` | green-screen pour, 206 frames | 1920x1080 | 206 | plates 60 s each | 18.2 GB | One shot into three ad backgrounds; the semi-transparent glass shows each new background through it |
+| [vfx_05_shadow_pass](vfx_05_shadow_pass) | Clean Plate ratio as shadow pass + Lab colour match (`composite_shadow.py`) | Pexels dancer, full body | 576x1024 | 49 | CPU, seconds | — | Real floor shadow recovered (feet grounded); colour match is the biggest gain; floor + near-subject limits remove false shadows |
+| private: round 2 (4 runs) | Inpaint person to alien, selective removal, object removal, shadow pass on a waist-up shot | personal clips | 704x544 / 1024x768 | 49–89 | 127–135 s | 19.0 GB | Remove one person and keep the other: **works**. Inpaint aliens keep placement but lose the pose. Removing a car people lean on: **fails** (a new car is drawn). See VFX_USE_CASES |
 
 ![alpha_gen_01](alpha_gen_01/preview_frame.jpg)
 ![alpha_gen_02](alpha_gen_02/preview_frame.jpg)

@@ -58,9 +58,17 @@ transformer and int8 Gemma 12B encoder.
     - location swap: Alpha Gen + SAM3 + a generated plate + a composite
     - creatures in the real set: Clean Plate + Union pose + Alpha Gen + a composite
     - wardrobe change: SAM3 masks + Inpaint
-11. **The video VAE choice doesn't matter for mattes.** The conv VAE gives a virtually
+11. **Round 2: deeper tests on what worked:**
+    - **Removing one person** while keeping the other works (Clean Plate + a per-person
+      matte).
+    - **The Clean Plate ratio gives a usable shadow pass** when the floor is in frame. The
+      Lab colour match is the biggest integration gain.
+    - **One green-screen product shot becomes many ads** with generated plates.
+    - **Inpaint keeps placement but not pose; Union keeps pose but not placement.**
+    - **Objects people touch cannot be removed.**
+12. **The video VAE choice doesn't matter for mattes.** The conv VAE gives a virtually
    identical matte (0.16 % of pixels differ noticeably) and is a bit faster, so use it.
-12. **VRAM sets the limit on a 24 GB card.**
+13. **VRAM sets the limit on a 24 GB card.**
 
    | size | frames | time | VRAM peak |
    |---|---|---|---|

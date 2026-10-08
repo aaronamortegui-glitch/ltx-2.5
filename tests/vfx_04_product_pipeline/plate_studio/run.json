@@ -1,0 +1,19 @@
+{
+  "prompt": "A clean seamless studio backdrop with a soft pastel pink to lavender gradient and gentle rim light, subtle floating dust particles. Static locked-off camera, product photography background, empty, photorealistic.",
+  "effective_prompt": "A clean seamless studio backdrop with a soft pastel pink to lavender gradient and gentle rim light, subtle floating dust particles. Static locked-off camera, product photography background, empty, photorealistic.",
+  "image": null,
+  "i2v_strength": 0.7,
+  "seconds": 3.0,
+  "fps": 24.0,
+  "size": [
+    960,
+    544
+  ],
+  "seed": 42,
+  "enhance": false,
+  "lora": null,
+  "lora_strength": 1.0,
+  "gen_seconds": 60.0,
+  "vram_peak_gb": 18.2,
+  "prompt_id": "b12fd164-c31f-49a1-a735-5282e97fe2c5"
+}
